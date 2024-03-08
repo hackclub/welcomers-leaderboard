@@ -9,45 +9,61 @@ const elastic = new Client({
 });
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  const config = load(
-    await fetch(
-      "https://raw.githubusercontent.com/hackclub/slacker/main/config/welcomers.yaml"
-    ).then((res) => res.text())
-  ) as { maintainers: string[] };
+  const welcomes = await elastic.search({
+    index: "search-slacker-analytics",
+    q: `project:welcomers AND actionItemType:message AND state:resolved`,
+    aggs: {
+      by_welcomer: {
+        terms: {
+          field: "assignee.displayName.enum",
+          size: 100,
+        },
+      },
+    },
+  });
 
-  const maintainers = load(
-    await fetch("https://raw.githubusercontent.com/hackclub/slacker/main/maintainers.yaml").then(
-      (res) => res.text()
-    )
-  ) as { id: string }[];
+  const followUp7days = await elastic.search({
+    index: "search-slacker-analytics",
+    q: `project:welcomers AND actionItemType:followUp AND state:triaged AND followUpDuration: [5760 TO 14400]`,
+    aggs: {
+      by_welcomer: {
+        terms: {
+          field: "assignee.displayName.enum",
+          size: 100,
+        },
+      },
+    },
+  });
 
-  const welcomers = maintainers.filter((maintainer) => config.maintainers.includes(maintainer.id));
+  const followUp30days = await elastic.search({
+    index: "search-slacker-analytics",
+    q: `project:welcomers AND actionItemType:followUp AND state:triaged AND followUpDuration: [28800 TO 57600]`,
+    aggs: {
+      by_welcomer: {
+        terms: {
+          field: "assignee.displayName.enum",
+          size: 100,
+        },
+      },
+    },
+  });
 
-  const data: any[] = [];
+  type Bucket = { key: string; doc_count: number };
 
-  for await (const welcomer of welcomers) {
-    const welcomes = await elastic.count({
-      index: "search-slacker-analytics",
-      q: `project:welcomers AND actionItemType:message AND state:resolved AND assignee.displayName:${welcomer.id}`,
-    });
-
-    const followUp7days = await elastic.count({
-      index: "search-slacker-analytics",
-      q: `project:welcomers AND actionItemType:followUp AND state:triaged AND assignee.displayName:${welcomer.id} AND followUpDuration: [5760 TO 14400]`,
-    });
-
-    const followUp30days = await elastic.count({
-      index: "search-slacker-analytics",
-      q: `project:welcomers AND actionItemType:followUp AND state:triaged AND assignee.displayName:${welcomers[6].id} AND followUpDuration: [28800 TO 57600]`,
-    });
-
-    data.push({
-      id: welcomer.id,
-      initial: welcomes.count,
-      sevenDays: followUp7days.count,
-      Thirtydays: followUp30days.count,
-    });
-  }
+  const data = (welcomes.aggregations?.by_welcomer as { buckets: Bucket[] }).buckets.map(
+    (welcomer) => ({
+      id: welcomer.key,
+      initial: welcomer.doc_count,
+      sevenDays:
+        (followUp7days.aggregations?.by_welcomer as { buckets: Bucket[] }).buckets.find(
+          (bucket) => bucket.key === welcomer.key
+        )?.doc_count || 0,
+      Thirtydays:
+        (followUp30days.aggregations?.by_welcomer as { buckets: Bucket[] }).buckets.find(
+          (bucket) => bucket.key === welcomer.key
+        )?.doc_count || 0,
+    })
+  );
 
   return res.status(200).json(data);
 }
