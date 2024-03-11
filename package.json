@@ -17,6 +17,7 @@
     "react-dom": "^18"
   },
   "devDependencies": {
+    "@tailwindcss/forms": "^0.5.7",
     "@types/js-yaml": "^4.0.9",
     "@types/lodash": "^4.14.202",
     "@types/node": "^20",
