@@ -10,6 +10,7 @@ const elastic = new Client({
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const { days } = req.query;
+  const range = isNaN(Number(days)) ? "" : `AND createdTime: [now-${days}d/d TO now/d]`;
 
   const welcomers = (
     load(
@@ -21,7 +22,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   const welcomes = await elastic.search({
     index: "search-slacker-analytics",
-    q: `project:welcomers AND actionItemType:message AND state:resolved`,
+    q: `project:welcomers AND actionItemType:message AND state:resolved ${range}`,
     aggs: {
       by_welcomer: {
         terms: {
@@ -34,7 +35,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   const followUp7days = await elastic.search({
     index: "search-slacker-analytics",
-    q: `project:welcomers AND actionItemType:followUp AND state:triaged AND followUpDuration: [5760 TO 14400]`,
+    q: `project:welcomers AND actionItemType:followUp AND state:triaged AND followUpDuration: [5760 TO 14400] ${range}`,
     aggs: {
       by_welcomer: {
         terms: {
@@ -47,7 +48,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   const followUp30days = await elastic.search({
     index: "search-slacker-analytics",
-    q: `project:welcomers AND actionItemType:followUp AND state:triaged AND followUpDuration: [28800 TO 57600]`,
+    q: `project:welcomers AND actionItemType:followUp AND state:triaged AND followUpDuration: [28800 TO 57600] ${range}`,
     aggs: {
       by_welcomer: {
         terms: {
