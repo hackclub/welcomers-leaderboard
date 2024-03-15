@@ -9,7 +9,7 @@ function classNames(...classes: string[]) {
 
 export default function Home() {
   const [users, setUsers] = useState<
-    { id: string; initial: number; sevenDays: number; Thirtydays: number }[]
+    { id: string; initial: number; misc: number; sevenDays: number; thirtyDays: number }[]
   >([]);
   const [tabs, setTabs] = useState([
     { name: "All time", current: true, value: undefined },
@@ -48,24 +48,58 @@ export default function Home() {
         ))}
       </nav>
 
-      <div className="flex flex-col max-w-xl w-full rounded-lg bg-gray-100 border-gray-300 border-2 text-gray-800">
-        {orderBy(users, "initial", "desc").map((u, i) => (
-          <div
-            key={u.id}
-            className={`flex items-center gap-2 justify-between text-xl p-4 ${
-              i === users.length - 1 ? "" : "border-b"
-            }`}
-          >
-            <p>{u.id}</p>
-            <div className="flex items-center gap-2">
-              <p>{u.initial}&nbsp;🔥</p>
-              <div className="w-0.5 h-6 bg-gray-300" />
-              <p>{u.sevenDays}&nbsp;🔥</p>
-              <div className="w-0.5 h-6 bg-gray-300" />
-              <p>{u.Thirtydays}&nbsp;🔥</p>
-            </div>
-          </div>
-        ))}
+      {/* <table className="w-full max-w-xl rounded-lg bg-gray-100 border-gray-300 border-2 text-gray-800">
+        <thead>
+          <tr>
+            <th className="py-2 px-4 border-b">User</th>
+            <th className="py-2 px-4 border-b">0</th>
+            <th className="py-2 px-4 border-b">&lt;5</th>
+            <th className="py-2 px-4 border-b">7</th>
+            <th className="py-2 px-4 border-b">30</th>
+          </tr>
+        </thead>
+        <tbody>
+          {orderBy(users, "initial", "desc").map((u, i) => (
+            <tr key={u.id} className={`${i === users.length - 1 ? "" : "border-b"}`}>
+              <td className="py-2 px-4">{u.id}</td>
+              <td className="py-2 px-4">{u.initial}</td>
+              <td className="py-2 px-4">{u.misc}</td>
+              <td className="py-2 px-4">{u.sevenDays}</td>
+              <td className="py-2 px-4">{u.Thirtydays}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table> */}
+
+      <div className="inline-block w-full max-w-3xl py-2 align-middle sm:px-6 lg:px-8">
+        <div className="overflow-hidden shadow ring-1 ring-black ring-opacity-5 sm:rounded-lg">
+          <table className="w-full divide-y divide-gray-300">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="py-3.5 pl-4 pr-3 text-left font-semibold text-gray-900 sm:pl-6">
+                  User
+                </th>
+                <th className="px-3 py-3.5 text-left font-semibold text-gray-900">0</th>
+                <th className="px-3 py-3.5 text-left font-semibold text-gray-900">&lt;5</th>
+                <th className="px-3 py-3.5 text-left font-semibold text-gray-900">7</th>
+                <th className="px-3 py-3.5 text-left font-semibold text-gray-900">30</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-200 bg-white">
+              {orderBy(users, "initial", "desc").map((u) => (
+                <tr key={u.id}>
+                  <td className="whitespace-nowrap py-4 pl-4 pr-3 font-medium text-gray-900 sm:pl-6">
+                    {u.id}
+                  </td>
+                  <td className="whitespace-nowrap px-3 py-4 text-gray-500">{u.initial}</td>
+                  <td className="whitespace-nowrap px-3 py-4 text-gray-500">{u.misc}</td>
+                  <td className="whitespace-nowrap px-3 py-4 text-gray-500">{u.sevenDays}</td>
+                  <td className="whitespace-nowrap px-3 py-4 text-gray-500">{u.thirtyDays}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
     </main>
   );
