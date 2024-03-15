@@ -10,7 +10,7 @@ const elastic = new Client({
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const { days } = req.query;
-  const range = isNaN(Number(days)) ? "" : `AND createdTime: [now-${days}d/d TO now/d]`;
+  const range = isNaN(Number(days)) ? "" : `AND resolvedTime: [now-${days}d/d TO now/d]`;
 
   const welcomers = (
     load(
