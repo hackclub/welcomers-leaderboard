@@ -33,6 +33,19 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     },
   });
 
+  const followUpMiscs = await elastic.search({
+    index: "search-slacker-analytics",
+    q: `project:welcomers AND actionItemType:followUp AND state:triaged AND followUpDuration: [0 TO 5760] ${range}`,
+    aggs: {
+      by_welcomer: {
+        terms: {
+          field: "assignee.displayName.enum",
+          size: 100,
+        },
+      },
+    },
+  });
+
   const followUp7days = await elastic.search({
     index: "search-slacker-analytics",
     q: `project:welcomers AND actionItemType:followUp AND state:triaged AND followUpDuration: [5760 TO 14400] ${range}`,
@@ -66,11 +79,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     .map((welcomer) => ({
       id: welcomer.key,
       initial: welcomer.doc_count,
+      misc:
+        (followUpMiscs.aggregations?.by_welcomer as { buckets: Bucket[] }).buckets.find(
+          (bucket) => bucket.key === welcomer.key
+        )?.doc_count || 0,
       sevenDays:
         (followUp7days.aggregations?.by_welcomer as { buckets: Bucket[] }).buckets.find(
           (bucket) => bucket.key === welcomer.key
         )?.doc_count || 0,
-      Thirtydays:
+      thirtyDays:
         (followUp30days.aggregations?.by_welcomer as { buckets: Bucket[] }).buckets.find(
           (bucket) => bucket.key === welcomer.key
         )?.doc_count || 0,
